@@ -1,0 +1,40 @@
+from collections import deque
+
+class Treenode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+def tree_right(root):
+    if not root:
+        return []
+    result = []
+    queue = deque()
+    queue.append(root)
+
+    while queue:
+        current_node = queue.popleft()
+
+        if current_node.left:
+            queue.append(current_node.left)
+        if current_node.right:
+            queue.append(current_node.right)
+
+        if current_node.value == None:
+            result.append(current_node)
+
+    return result
+
+    
+def main():
+    root = Treenode(12)
+    root.left = Treenode(7)
+    root.right = Treenode(1)
+    root.left.left = Treenode(9)
+    root.right.left = Treenode(10)
+    root.right.right = Treenode(5)
+
+    print("Level order traversal of the binary tree:", root.traverse())
+
+main()

@@ -1,0 +1,55 @@
+from collections import deque
+
+class Treenode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+def traverse(self):
+    result = []
+    queue = deque()
+    queue.append(self)
+    
+    while queue:
+        num = 0
+        size = len(queue)
+        level = []
+        for _ in range(size):
+            current_node = queue.popleft()
+            if num + 1 % 2 == 0:
+                level.append(current_node.value) 
+            else:
+                level.insert(0, current_node.value)       
+
+            if current_node.left:
+                queue.append(current_node.left)
+            if current_node.right:
+                queue.append(current_node.right)
+               
+        
+        if num + 1 % 2 == 0:
+            result.append(level)
+            num += 1
+        else:
+            result.insert(0, level)
+            num += 1
+        
+        
+
+        
+
+    return list(result)
+    
+def main():
+    root = Treenode(1)
+    root.left = Treenode(2)
+    root.right = Treenode(3)
+    root.left.left = Treenode(4)
+    root.left.right = Treenode(5)
+    root.right.left = Treenode(6)
+    root.right.right = Treenode(7)
+
+    print("ZigzagLevel order traversal of the binary tree:", traverse(root))
+
+main()
