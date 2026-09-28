@@ -1,7 +1,7 @@
 {
     "python-envs.pythonProjects": [
         {
-            "path": "insertmedian.py",
+            "path": "Small-Works/insertmedian.py",
             "envManager": "ms-python.python:venv",
             "packageManager": "ms-python.python:pip"
         }
