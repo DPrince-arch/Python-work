@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socratic AI Study Suite</title>
+    <link rel="icon" type="image/png" href="/static/logo.png">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #0b1120;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: linear-gradient(to right, #1d2b78 0%, #141b4e 50%, #050814 100%);
+            background-attachment: fixed;
+            color: var(--text-main); 
+            line-height: 1.5; 
+            min-height: 100vh;
+        }
+
+        header { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: #1d2b78; display: flex; align-items: center; gap: 0.5rem; }
+        
+        .active-source-badge { background: #e0e7ff; color: #1d2b78; padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
+
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+
+        .tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid rgba(255, 255, 255, 0.2); margin-bottom: 1.5rem; }
+        .tab-btn { padding: 0.75rem 1.25rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px 8px 0 0; font-size: 1rem; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { color: #ffffff; background: rgba(255, 255, 255, 0.2); }
+        .tab-btn.active { color: #ffffff; background: rgba(255, 255, 255, 0.25); border-bottom: 3px solid #60a5fa; }
+
+        .tab-content { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .tab-content.active { display: block; }
+
+        .source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        .source-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; background: #fff; }
+
+        .upload-area { border: 2px dashed var(--border-color); border-radius: 8px; padding: 1.5rem; text-align: center; background: #fafafa; cursor: pointer; margin-top: 0.75rem; }
+        .upload-area:hover { border-color: var(--primary); background: #f0f7ff; }
+
+        .topic-input-group { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .topic-input-group input { flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; }
+
+        .doc-list { margin-top: 1.5rem; }
+        .doc-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 0.5rem; }
+        .doc-item.selected { border-color: var(--primary); background-color: #eff6ff; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.875rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+        .chat-box { height: 450px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; background: #fafafa; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .message { padding: 0.75rem 1rem; border-radius: 8px; max-width: 85%; line-height: 1.5; font-size: 0.95rem; }
+        .message.user { align-self: flex-end; background-color: var(--primary); color: white; }
+        .message.tutor { align-self: flex-start; background-color: #f1f5f9; color: var(--text-main); border: 1px solid #e2e8f0; }
+
+        .chat-input-row { display: flex; gap: 0.5rem; }
+        .chat-input-row input { flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; }
+        .btn-primary { padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .flip-card { height: 200px; perspective: 1000px; cursor: pointer; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; padding: 1.25rem; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid var(--border-color); }
+        .card-front { background-color: #ffffff; color: var(--text-main); }
+        .card-back { background-color: #eff6ff; color: #1e3a8a; transform: rotateY(180deg); }
+
+        .quiz-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; background: #fff; }
+        .option-label { display: block; padding: 0.6rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin: 0.4rem 0; cursor: pointer; transition: background 0.2s; }
+        .option-label:hover { background: #f8fafc; }
+        .option-label input { margin-right: 0.5rem; }
+
+        .score-banner { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: 600; }
+        .feedback-item { margin-top: 0.5rem; font-size: 0.875rem; padding: 0.5rem; border-radius: 4px; }
+        .feedback-correct { background: #d1fae5; color: #065f46; }
+        .feedback-incorrect { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="logo.png" alt="Socratic AI Logo" style="height: 38px; border-radius: 6px;">
+            <span>Socratic AI Study Suite</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="btn-sm" style="background: #475569;" onclick="openSettingsModal()">⚙️ API Keys</button>
+            <div id="active-source-display" class="active-source-badge">No Context Selected</div>
+        </div>
+    </header>
+
+    <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 520px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <h2 style="margin-bottom: 0.5rem; color: var(--primary);">⚙️ LLM Provider & API Key Settings</h2>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Configure your primary AI provider (Cerebras Cloud vs Gemini) and custom API Keys (saved in browser local storage).</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">⚡ Primary LLM Provider:</label>
+                    <select id="llm-provider-select" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem;">
+                        <option value="cerebras">⚡ Cerebras Cloud (Llama 3.3 70B - Ultra Fast)</option>
+                        <option value="gemini">♊ Google Gemini (Gemini 2.5 Flash)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">⚡ Cerebras API Key:</label>
+                    <input type="password" id="key-cerebras" placeholder="csk-..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">💬 Socratic Tutor Gemini Key:</label>
+                    <input type="password" id="key-socratic" placeholder="AIzaSy..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">🎴 Flashcards Gemini Key:</label>
+                    <input type="password" id="key-flashcard" placeholder="AIzaSy..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">📝 Adaptive Quizzer Gemini Key:</label>
+                    <input type="password" id="key-quiz" placeholder="AIzaSy..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">🔍 RAG Embeddings Gemini Key:</label>
+                    <input type="password" id="key-embedding" placeholder="AIzaSy..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+                <button class="btn-sm" style="background: #94a3b8;" onclick="closeSettingsModal()">Cancel</button>
+                <button class="btn-sm" style="background: #ef4444;" onclick="clearApiKeys()">Clear Keys</button>
+                <button class="btn-primary" onclick="saveApiKeys()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('source')">⚙️ Setup Context</button>
+            <button class="tab-btn" onclick="switchTab('chat')">🏛️ Socratic Chat</button>
+            <button class="tab-btn" onclick="switchTab('flashcards')">🎴 Flashcards</button>
+            <button class="tab-btn" onclick="switchTab('quiz')">🎯 Adaptive Quiz</button>
+        </div>
+
+        <div id="tab-source" class="tab-content active">
+            <h2>Select Study Context Source</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Choose how you want to study: upload your own lecture notes/PDFs, OR enter a Course/Topic name if you don't have notes.</p>
+
+            <div class="source-grid">
+                <div class="source-card">
+                    <h3>📄 Option A: Upload Notes / PDFs</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">Questions, cards, and quizzes will be grounded strictly in your file.</p>
+                    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                        <p>📄 Click to upload (.txt, .md, .pdf)</p>
+                        <input type="file" id="file-input" style="display:none" onchange="uploadFile(this.files[0])">
+                    </div>
+                </div>
+
+                <div class="source-card">
+                    <h3>🎓 Option B: Enter Topic / Course Name</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">No notes? Enter what you want to learn (e.g. "Cell Biology", "Python Web Dev").</p>
+                    <div class="topic-input-group">
+                        <input type="text" id="topic-name-input" placeholder="e.g. Data Structures & Algorithms">
+                        <button class="btn-primary" onclick="setTopicContext()">Set Topic</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-list">
+                <h3>Uploaded Documents</h3>
+                <div id="documents-container" style="margin-top: 0.5rem;">Loading documents...</div>
+            </div>
+        </div>
+
+        <div id="tab-chat" class="tab-content">
+            <h2>Socratic AI Study Partner</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Ask questions about your selected notes or course topic. The tutor will guide your discovery using probing questions!</p>
+            
+            <div id="chat-box" class="chat-box">
+                <div class="message tutor">Hello! Set your notes or course topic in "Setup Context", then type your question. I will guide you step-by-step!</div>
+            </div>
+
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Type a concept or question..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button class="btn-primary" onclick="sendChatMessage()">Send</button>
+            </div>
+        </div>
+
+        <div id="tab-flashcards" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Study Flashcards</h2>
+                <button class="btn-primary" onclick="generateFlashcards()">✨ Generate Flashcards</button>
+            </div>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Click any card to flip between Question and Answer.</p>
+
+            <div id="cards-container" class="cards-grid">
+                <p style="color: var(--text-muted); grid-column: 1 / -1;">Select notes or a topic and click "Generate Flashcards".</p>
+            </div>
+        </div>
+
+        <div id="tab-quiz" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Adaptive Mastery Quiz</h2>
+                <button class="btn-primary" onclick="generateQuiz()">🎯 Start Adaptive Quiz</button>
+            </div>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Multiple-choice questions tailored to your active context, adaptively calibrated to your difficulty level.</p>
+
+            <div id="quiz-container" style="margin-top: 1.5rem;">
+                <p style="color: var(--text-muted);">Click "Start Adaptive Quiz" to generate questions.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDocumentId = null;
+        let currentTopicName = null;
+        let currentSessionId = null;
+        let activeQuizData = null;
+
+        function openSettingsModal() {
+            document.getElementById('key-socratic').value = localStorage.getItem('key_socratic') || '';
+            document.getElementById('key-flashcard').value = localStorage.getItem('key_flashcard') || '';
+            document.getElementById('key-quiz').value = localStorage.getItem('key_quiz') || '';
+            document.getElementById('key-embedding').value = localStorage.getItem('key_embedding') || '';
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function saveApiKeys() {
+            localStorage.setItem('key_socratic', document.getElementById('key-socratic').value.trim());
+            localStorage.setItem('key_flashcard', document.getElementById('key-flashcard').value.trim());
+            localStorage.setItem('key_quiz', document.getElementById('key-quiz').value.trim());
+            localStorage.setItem('key_embedding', document.getElementById('key-embedding').value.trim());
+            closeSettingsModal();
+            alert("Gemini API Keys saved in local browser settings!");
+        }
+
+        function clearApiKeys() {
+            localStorage.removeItem('key_socratic');
+            localStorage.removeItem('key_flashcard');
+            localStorage.removeItem('key_quiz');
+            localStorage.removeItem('key_embedding');
+            openSettingsModal();
+            alert("Cleared local API keys & settings. System will use server defaults.");
+        }
+
+        function getApiKeyHeaders() {
+            const headers = {};
+            const socraticKey = localStorage.getItem('key_socratic');
+            const flashcardKey = localStorage.getItem('key_flashcard');
+            const quizKey = localStorage.getItem('key_quiz');
+            const embeddingKey = localStorage.getItem('key_embedding');
+
+            if (socraticKey) headers['X-Socratic-Api-Key'] = socraticKey;
+            if (flashcardKey) headers['X-Flashcard-Api-Key'] = flashcardKey;
+            if (quizKey) headers['X-Quiz-Api-Key'] = quizKey;
+            if (embeddingKey) headers['X-Embedding-Api-Key'] = embeddingKey;
+
+            return headers;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            if (tabName === 'source') fetchDocuments();
+        }
+
+        function updateActiveSourceBadge() {
+            const badge = document.getElementById('active-source-display');
+            if (currentDocumentId) {
+                badge.innerText = `Active Doc: ${currentDocumentId.substring(0, 12)}...`;
+            } else if (currentTopicName) {
+                badge.innerText = `Active Topic: ${currentTopicName}`;
+            } else {
+                badge.innerText = `No Context Selected`;
+            }
+        }
+
+        function setTopicContext() {
+            const topicInput = document.getElementById('topic-name-input');
+            const topic = topicInput.value.trim();
+            if (!topic) {
+                alert("Please enter a valid topic or course name!");
+                return;
+            }
+            currentTopicName = topic;
+            currentDocumentId = null;
+            updateActiveSourceBadge();
+            alert(`Context set to Course Topic: "${topic}"`);
+            fetchDocuments();
+        }
+
+        async function fetchDocuments() {
+            try {
+                const res = await fetch('/api/documents');
+                const docs = await res.json();
+                const container = document.getElementById('documents-container');
+                
+                if (docs.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No uploaded documents yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = docs.map(doc => `
+                    <div class="doc-item ${doc.id === currentDocumentId ? 'selected' : ''}">
+                        <div>
+                            <strong>📄 ${doc.filename}</strong>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Uploaded: ${doc.created_at}</div>
+                        </div>
+                        <button class="btn-sm" onclick="selectDocument('${doc.id}', '${doc.filename}')">
+                            ${doc.id === currentDocumentId ? 'Active' : 'Select Doc'}
+                        </button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Error fetching docs:", err);
+            }
+        }
+
+        function selectDocument(id, filename) {
+            currentDocumentId = id;
+            currentTopicName = null;
+            const badge = document.getElementById('active-source-display');
+            badge.innerText = `Active Doc: ${filename}`;
+            fetchDocuments();
+        }
+
+        async function uploadFile(file) {
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/documents/upload', {
+                    method: 'POST',
+                    headers: getApiKeyHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    selectDocument(data.document_id, data.filename);
+                    alert(`Success: ${data.message} (${data.chunks_count} chunks indexed)`);
+                } else {
+                    alert(`Upload Error: ${data.detail}`);
+                }
+            } catch (err) {
+                alert(`Error uploading file: ${err.message}`);
+            }
+        }
+
+        async function sendChatMessage() {
+            if (!currentDocumentId && !currentTopicName) {
+                alert("Please select a document or set a Topic/Course name in 'Setup Context' first!");
+                switchTab('source');
+                return;
+            }
+
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            input.value = '';
+
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<div class="message user">${escapeHtml(message)}</div>`;
+
+            const tutorDiv = document.createElement('div');
+            tutorDiv.className = 'message tutor';
+            tutorDiv.innerHTML = '<em>Thinking...</em>';
+            box.appendChild(tutorDiv);
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const response = await fetch('/api/chat/stream', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getApiKeyHeaders()),
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        document_id: currentDocumentId,
+                        topic_name: currentTopicName,
+                        message: message
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                tutorDiv.innerHTML = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n\n');
+                    for (let line of lines) {
+                        if (line.startsWith('data: [SESSION_ID:')) {
+                            currentSessionId = line.replace('data: [SESSION_ID:', '').replace(']', '').trim();
+                        } else if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                            tutorDiv.innerHTML += line.replace('data: ', '');
+                            box.scrollTop = box.scrollHeight;
+                        }
+                    }
+                }
+            } catch (err) {
+                tutorDiv.innerHTML = `Error streaming response: ${err.message}`;
+            }
+        }
+
+        async function generateFlashcards() {
+            if (!currentDocumentId && !currentTopicName) {
+                alert("Please select a document or set a Topic/Course name first!");
+                return;
+            }
+
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1;">Generating flashcards...</p>';
+
+            try {
+                const res = await fetch('/api/flashcards/generate', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getApiKeyHeaders()),
+                    body: JSON.stringify({
+                        document_id: currentDocumentId,
+                        topic_name: currentTopicName,
+                        num_cards: 6
+                    })
+                });
+                const data = await res.json();
+                renderCards(data.cards);
+            } catch (err) {
+                container.innerHTML = `<p style="color: red;">Error generating cards: ${err.message}</p>`;
+            }
+        }
+
+        function renderCards(cards) {
+            const container = document.getElementById('cards-container');
+            if (!cards || cards.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1;">No cards generated.</p>';
+                return;
+            }
+
+            container.innerHTML = cards.map(card => `
+                <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="card-front">
+                            <strong style="color: var(--primary);">Question</strong>
+                            <p style="margin-top: 0.5rem;">${escapeHtml(card.front)}</p>
+                        </div>
+                        <div class="card-back">
+                            <strong>Answer</strong>
+                            <p style="margin-top: 0.5rem; font-weight: 500;">${escapeHtml(card.back)}</p>
+                            <small style="margin-top: 0.5rem; color: #4b5563;">${escapeHtml(card.explanation)}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function generateQuiz() {
+            if (!currentDocumentId && !currentTopicName) {
+                alert("Please select a document or set a Topic/Course name first!");
+                return;
+            }
+
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '<p style="color: var(--text-muted);">Synthesizing adaptive quiz questions...</p>';
+
+            try {
+                const res = await fetch('/api/quiz/generate', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getApiKeyHeaders()),
+                    body: JSON.stringify({
+                        document_id: currentDocumentId,
+                        topic_name: currentTopicName,
+                        num_questions: 10
+                    })
+                });
+                activeQuizData = await res.json();
+                renderQuiz(activeQuizData);
+            } catch (err) {
+                container.innerHTML = `<p style="color: red;">Error generating quiz: ${err.message}</p>`;
+            }
+        }
+
+        function renderQuiz(quizData) {
+            const container = document.getElementById('quiz-container');
+            if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted);">No quiz questions generated.</p>';
+                return;
+            }
+
+            let html = `<h3>${escapeHtml(quizData.topic)}</h3><form id="quiz-form" style="margin-top: 1rem;">`;
+
+            quizData.questions.forEach((q, idx) => {
+                html += `
+                    <div class="quiz-card">
+                        <strong style="color: var(--primary);">Q${idx + 1} (${q.difficulty}):</strong> ${escapeHtml(q.question_text)}
+                        <div style="margin-top: 0.75rem;">
+                            ${q.options.map(opt => `
+                                <label class="option-label">
+                                    <input type="radio" name="q_${q.id}" value="${escapeHtml(opt)}" required>
+                                    ${escapeHtml(opt)}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `<button type="button" class="btn-primary" onclick="submitQuiz()">Submit Quiz</button></form>`;
+            container.innerHTML = html;
+        }
+
+        async function submitQuiz() {
+            const form = document.getElementById('quiz-form');
+            if (!form.checkValidity()) {
+                alert("Please answer all questions before submitting!");
+                return;
+            }
+
+            const answers = activeQuizData.questions.map(q => {
+                const selected = form.querySelector(`input[name="q_${q.id}"]:checked`);
+                return {
+                    question_id: q.id,
+                    selected_option: selected ? selected.value : ""
+                };
+            });
+
+            try {
+                const res = await fetch('/api/quiz/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_id: currentDocumentId,
+                        topic_name: currentTopicName,
+                        answers: answers
+                    })
+                });
+                const feedback = await res.json();
+                renderQuizFeedback(feedback);
+            } catch (err) {
+                alert(`Error submitting quiz: ${err.message}`);
+            }
+        }
+
+        function renderQuizFeedback(feedback) {
+            const container = document.getElementById('quiz-container');
+            let html = `
+                <div class="score-banner">
+                    🎯 Score: ${feedback.score} / ${feedback.total_questions} (${feedback.percentage}%)
+                </div>
+            `;
+
+            feedback.results.forEach((r, idx) => {
+                html += `
+                    <div class="quiz-card">
+                        <strong>Q${idx + 1}: ${escapeHtml(r.question_text)}</strong>
+                        <div class="feedback-item ${r.is_correct ? 'feedback-correct' : 'feedback-incorrect'}">
+                            ${r.is_correct ? '✅ Correct!' : `❌ Incorrect. Your answer: ${escapeHtml(r.user_answer)}`}
+                            <br><strong>Correct Answer:</strong> ${escapeHtml(r.correct_answer)}
+                            <br><small><strong>Explanation:</strong> ${escapeHtml(r.explanation)}</small>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `<button class="btn-primary" onclick="generateQuiz()">Try Another Quiz</button>`;
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        fetchDocuments();
+    </script>
+</body>
+</html>
