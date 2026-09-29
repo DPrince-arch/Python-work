@@ -1,5 +1,6 @@
+from typing import Optional
 import uuid
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from app.schema import ChatRequest
 from services.socratic_service import socratic_service
@@ -8,7 +9,7 @@ from app.database import get_db
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 @router.post("/stream")
-async def stream_chat(payload: ChatRequest):
+async def stream_chat(payload: ChatRequest, x_socratic_api_key: Optional[str] = Header(None, alias="X-Socratic-Api-Key")):
     session_id = payload.session_id or str(uuid.uuid4())
     doc_id = payload.document_id
     topic_name = payload.topic_name
@@ -31,7 +32,10 @@ async def stream_chat(payload: ChatRequest):
         full_reply = []
         yield f"data: [SESSION_ID:{session_id}]\n\n"
         
-        async for chunk in socratic_service.stream_socratic_response(doc_id, topic_name, payload.message, history):
+        async for chunk in socratic_service.stream_socratic_response(
+            doc_id, topic_name, payload.message, history,
+            api_key=x_socratic_api_key
+            ):
             if chunk.startswith("data: ") and not chunk.endswith("[DONE]\n\n") and not chunk.startswith("data: [SESSION_ID:"):
                 text_piece = chunk.replace("data: ", "").replace("\n\n", "")
                 full_reply.append(text_piece)

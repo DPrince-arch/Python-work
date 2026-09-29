@@ -14,8 +14,6 @@ class SocraticService:
         user_message: str,
         history: List[Dict[str, str]],
         api_key: Optional[str] = None,
-        cerebras_key: Optional[str] = None,
-        provider: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
 
         if document_id:

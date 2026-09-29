@@ -101,21 +101,10 @@
 
     <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
         <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 520px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-            <h2 style="margin-bottom: 0.5rem; color: var(--primary);">⚙️ LLM Provider & API Key Settings</h2>
-            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Configure your primary AI provider (Cerebras Cloud vs Gemini) and custom API Keys (saved in browser local storage).</p>
+            <h2 style="margin-bottom: 0.5rem; color: var(--primary);">⚙️ Gemini API Key Settings</h2>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Configure custom Gemini API Keys for each mode (saved in browser local storage).</p>
             
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <div>
-                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">⚡ Primary LLM Provider:</label>
-                    <select id="llm-provider-select" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem;">
-                        <option value="cerebras">⚡ Cerebras Cloud (Llama 3.3 70B - Ultra Fast)</option>
-                        <option value="gemini">♊ Google Gemini (Gemini 2.5 Flash)</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">⚡ Cerebras API Key:</label>
-                    <input type="password" id="key-cerebras" placeholder="csk-..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">
-                </div>
                 <div>
                     <label style="font-size: 0.875rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">💬 Socratic Tutor Gemini Key:</label>
                     <input type="password" id="key-socratic" placeholder="AIzaSy..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px;">

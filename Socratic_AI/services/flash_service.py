@@ -16,8 +16,6 @@ class FlashcardService:
         topic_name: Optional[str] = None,
         num_cards: int = 5,
         api_key: Optional[str] = None,
-        cerebras_key: Optional[str] = None,
-        provider: Optional[str] = None
     ) -> FlashcardSet:
         source_id = document_id or topic_name or "general"
 
